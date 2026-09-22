@@ -555,12 +555,16 @@
         <div class="step">
           <span class="step-num">3</span>
           <h4>Step 3: Sign Up</h4>
-          <p>Name, WhatsApp number, country and state. Takes under a minute, and it's how you actually get on the list.</p>
+          <p>Name, email, WhatsApp number, country and state. Takes under a minute, and it's how you actually get on the list.</p>
           <form id="lead-form">
             <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off">
             <div class="field">
               <label for="full_name">Full name or username</label>
               <input type="text" id="full_name" name="full_name" required>
+            </div>
+            <div class="field">
+              <label for="email">Email address</label>
+              <input type="email" id="email" name="email" required>
             </div>
             <div class="field">
               <label for="whatsapp_number">WhatsApp number</label>
@@ -1033,6 +1037,7 @@
     var payload = {
       funnel: 'whatsapp-community',
       full_name: form.full_name.value.trim(),
+      email: form.email.value.trim(),
       whatsapp_number: form.whatsapp_number.value.trim(),
       country: form.country.value.trim(),
       state: form.state.value.trim(),
