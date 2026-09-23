@@ -5,6 +5,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
 const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || 'Governor';
 const WHATSAPP_NUMBER = '2348138281223'; // same number used by the on-page WhatsApp button
+const SUBSTACK_URL = 'https://govito001.substack.com';
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -24,13 +25,20 @@ function welcomeEmailHtml(fullName, whatsappLink) {
     <p style="margin:0 0 16px; font-size:15px; line-height:1.6; color:#c9c6bb;">
       Your spot in GovernorHQ is confirmed. One step left: say hi on WhatsApp so I can get you into the group.
     </p>
-    <p style="margin:0 0 28px; font-size:15px; line-height:1.6; color:#c9c6bb;">
-      Already messaged from the page? Ignore this. If not, here's your link:
+    <p style="margin:0 0 20px; font-size:15px; line-height:1.6; color:#c9c6bb;">
+      Already messaged from the page? Ignore the button below. If not, here's your link:
     </p>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 28px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 14px;">
       <tr><td style="border-radius:4px; background:#c99a4a;">
         <a href="${whatsappLink}" style="display:inline-block; padding:14px 26px; font-family: -apple-system, Segoe UI, Arial, sans-serif; font-weight:700; font-size:15px; color:#0c0c0e; text-decoration:none; border-radius:4px;">
           Message Me on WhatsApp &rarr;
+        </a>
+      </td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 28px;">
+      <tr><td style="border-radius:4px; border:1px solid #3a3a3d;">
+        <a href="${SUBSTACK_URL}" style="display:inline-block; padding:13px 26px; font-family: -apple-system, Segoe UI, Arial, sans-serif; font-weight:600; font-size:14px; color:#ece7dc; text-decoration:none; border-radius:4px;">
+          Subscribe on Substack &rarr;
         </a>
       </td></tr>
     </table>
