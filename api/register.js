@@ -71,8 +71,10 @@ async function sendWelcomeEmail(toEmail, fullName) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { funnel, full_name, whatsapp_number, email, country, state, expectation, website } = req.body || {};
+  const { funnel, full_name, whatsapp_number, email, country, state, expectation, consent, website } = req.body || {};
   if (website) return res.status(200).json({ ok: true }); // honeypot, silently succeed for bots
+
+  if (consent !== true) return res.status(400).json({ error: 'Please tick the box to agree before signing up.' });
 
   if (!full_name || !whatsapp_number) return res.status(400).json({ error: 'Name and WhatsApp number are required.' });
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
@@ -86,7 +88,8 @@ module.exports = async (req, res) => {
     email: String(email).slice(0, 200),
     country: country ? String(country).slice(0, 100) : null,
     state: state ? String(state).slice(0, 100) : null,
-    expectation: expectation ? String(expectation).slice(0, 2000) : null
+    expectation: expectation ? String(expectation).slice(0, 2000) : null,
+    consented_at: new Date().toISOString() // set here on the server, never trusted from the browser
   });
 
   if (error) {
