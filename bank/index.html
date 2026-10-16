@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>GovernorHQ Message Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a home screen of four shelves (what to post, who to talk to, group upkeep, library). Each tile opens one section as a tidy list. Stories are cards with one tab per platform. Brand colors, dark first. */
+  :root {
+    --bg: #0c0c0e;
+    --surface: #141417;
+    --raise: #1b1b1f;
+    --line: #2a2a30;
+    --ink: #ece7dc;
+    --muted: #a39d90;
+    --gold: #c99a4a;
+    --gold-ink: #0c0c0e;
+    --gold-soft: rgba(201, 154, 74, 0.16);
+    --ok: #7fb685;
+    --warn: #e0937f;
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+      --gold: #8a6420; --gold-ink: #ffffff; --gold-soft: rgba(138, 100, 32, 0.12); --ok: #2f6b3a; --warn: #a63d2a; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+    --gold: #8a6420; --gold-ink: #ffffff; --gold-soft: rgba(138, 100, 32, 0.12); --ok: #2f6b3a; --warn: #a63d2a; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 88px; }
+  main { max-width: 860px; margin-inline: auto; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  h1, h2, h3, p { margin: 0; }
+
+  /* home header */
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.05; margin-top: 6px; text-wrap: balance; }
+  .lede { color: var(--muted); margin-top: 8px; max-width: 54ch; }
+  .glance { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: 0.9rem; color: var(--muted); }
+  .glance b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .search { display: block; width: 100%; margin-top: 18px; font: inherit; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; min-height: 48px; }
+  .search::placeholder { color: var(--muted); }
+  .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; font-size: 0.875rem; color: var(--muted); }
+  .quick code { font-family: var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; overflow-wrap: anywhere; user-select: all; }
+
+  /* buttons */
+  .btn { font-weight: 600; font-size: 0.9rem; border-radius: 8px; padding: 9px 16px; min-height: 42px; border: 1px solid var(--line); background: transparent; }
+  .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  .btn.primary.done { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+  .btn.ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn.ok-on { border-color: var(--ok); color: var(--ok); }
+  .btn.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
+
+  /* home */
+  .block { margin-top: 30px; }
+  .block-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 14px; }
+  .block-title h2 { font-family: var(--display); font-weight: 600; font-size: 1.35rem; }
+  .block-title p { color: var(--muted); font-size: 0.85rem; text-align: right; }
+  .next { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .next-item { min-width: 0; display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .next-item .num { font-family: var(--display); font-size: 1.6rem; font-weight: 600; color: var(--gold); min-width: 1.4ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .next-item .mid { flex: 1; min-width: 0; }
+  .next-item .mid strong { display: block; font-weight: 600; }
+  .next-item .mid span { display: block; color: var(--muted); font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .tile { text-align: left; display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; min-height: 132px; }
+  .tile:hover { border-color: var(--gold); }
+  .tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .tile h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
+  .tile .count { font-family: var(--display); font-weight: 600; font-size: 1.9rem; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tile .count small { display: block; font-family: var(--body); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; text-align: right; margin-top: 3px; }
+  .tile.zero .count { color: var(--muted); }
+  .tile p { color: var(--muted); font-size: 0.875rem; }
+  .meter { margin-top: auto; height: 4px; border-radius: 4px; background: var(--raise); overflow: hidden; }
+  .meter i { display: block; height: 100%; background: var(--ok); }
+  .tile-foot { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+
+  /* chips */
+  .chip { display: inline-block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.new { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+  .chip.posted { border-color: var(--ok); color: var(--ok); }
+  .chip.partial { border-color: var(--gold); color: var(--gold); }
+
+  /* section view */
+  .topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--line); }
+  .back { font-weight: 600; font-size: 0.9rem; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; min-height: 40px; }
+  .back:hover { border-color: var(--gold); color: var(--gold); }
+  .topbar .where { color: var(--muted); font-size: 0.85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sec-head { margin-top: 22px; }
+  .sec-head h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.7rem, 5.5vw, 2.3rem); line-height: 1.1; }
+  .sec-head p { color: var(--muted); margin-top: 8px; max-width: 62ch; font-size: 0.95rem; }
+  .seg { display: inline-flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-top: 18px; max-width: 100%; }
+  .seg button { border: 0; background: transparent; border-radius: 999px; padding: 7px 14px; min-height: 38px; font-weight: 500; font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); font-weight: 600; }
+  .seg button b { font-weight: 600; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 16px; }
+  .empty { color: var(--muted); font-size: 0.95rem; border: 1px dashed var(--line); border-radius: 10px; padding: 18px; }
+
+  /* rows */
+  .row { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+  .row.is-used .row-title { color: var(--muted); }
+  .row-head { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: transparent; border: 0; padding: 13px 14px; min-height: 56px; }
+  .tag { flex: none; min-width: 40px; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--gold); }
+  .row-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+  .row-title { font-weight: 600; overflow-wrap: anywhere; }
+  .row-hint { color: var(--muted); font-size: 0.85rem; overflow-wrap: anywhere; }
+  .crumb { color: var(--gold); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .chev { flex: none; width: 10px; height: 10px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin-right: 4px; }
+  .row.open .chev { transform: rotate(-135deg); }
+  .row-body { padding: 0 14px 14px; display: grid; gap: 12px; }
+  .text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font-family: var(--body); font-size: 0.95rem; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px; user-select: all; }
+  .text .ph { background: var(--gold-soft); color: var(--gold); border-radius: 4px; padding: 0 3px; font-weight: 500; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fillnote { color: var(--muted); font-size: 0.82rem; }
+  .fillnote .ph { background: var(--gold-soft); color: var(--gold); border-radius: 4px; padding: 0 3px; }
+  details.hist { color: var(--muted); font-size: 0.8rem; }
+  details.hist summary { cursor: pointer; width: fit-content; }
+  details.hist p { margin-top: 6px; overflow-wrap: anywhere; }
+  .imgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .imgs figure { margin: 0; display: grid; gap: 8px; align-content: start; }
+  .imgs img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); background: var(--raise); }
+  .imgs figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+  .imgs figure.is-used img { opacity: 0.6; }
+
+  /* story cards */
+  .story { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+  .story-head { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; background: transparent; border: 0; padding: 14px; min-height: 72px; }
+  .story-no { flex: none; font-family: var(--display); font-weight: 600; font-size: 1.8rem; line-height: 1; color: var(--gold); min-width: 1.3ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .story-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  .story-main strong { font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.2; }
+  .story-main span { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .story.is-posted .story-main strong { color: var(--muted); }
+  .story.open .chev { transform: rotate(-135deg); }
+  .story-body { padding: 0 14px 14px; display: grid; gap: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tabs button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 14px; min-height: 38px; font-size: 0.875rem; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
+  .tabs button[aria-selected="true"] { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); font-weight: 600; }
+  .tabs .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); }
+  .tabs .dot.on { background: var(--ok); border-color: var(--ok); }
+
+  .toast[hidden] { display: none; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .lock { max-width: 420px; margin: 10vh auto 0; display: grid; gap: 10px; }
+  .lock form { display: grid; gap: 12px; margin-top: 8px; }
+  .lockmsg { color: var(--warn); font-size: 0.9rem; min-height: 1.3em; }
+  /* toast */
+  .toast { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 440px; margin-inline: auto; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--ink); color: var(--bg); border-radius: 10px; padding: 10px 10px 10px 16px; font-size: 0.9rem; font-weight: 500; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); }
+  .toast button { border: 0; background: var(--bg); color: var(--ink); border-radius: 8px; padding: 7px 14px; font-weight: 600; min-height: 36px; }
+
+  footer { margin-top: 44px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--line); padding-top: 14px; max-width: 70ch; }
+  @media (prefers-reduced-motion: no-preference) { .btn, .tile, .seg button { transition: background 0.15s, border-color 0.15s, color 0.15s; } }
+  @media (max-width: 420px) { .imgs { gap: 8px; } .block-title { flex-direction: column; gap: 2px; } .block-title p { text-align: left; } }
+</style>
+</head>
+<body>
+<main>
+  <section id="lock" class="lock" hidden>
+    <p class="eyebrow">GovernorHQ</p>
+    <h1>Message bank</h1>
+    <p class="lede">This page is private. Enter your passcode to open your drafts.</p>
+    <form id="lockform">
+      <label class="sr" for="pc">Passcode</label>
+      <input class="search" id="pc" name="password" type="password" autocomplete="current-password" placeholder="Passcode" style="margin-top:0" required>
+      <button class="btn primary" id="lockbtn" type="submit">Open</button>
+      <p class="lockmsg" id="lockmsg" role="alert"></p>
+    </form>
+  </section>
+  <div id="app" hidden>
+  <div id="top">
+    <div class="top-row"><p class="eyebrow">GovernorHQ</p><button class="btn small ghost" id="logout" type="button">Sign out</button></div>
+    <h1>Message bank</h1>
+    <p class="lede">Open a tile, tap Copy, paste it where you post. When it is out, mark it posted and it moves aside.</p>
+    <div class="glance" id="glance" aria-live="polite"></div>
+    <input class="search" id="q" type="search" placeholder="Search all messages" aria-label="Search every message" autocomplete="off">
+    <div class="quick">
+      <span>Join link</span>
+      <code id="joincode">https://governorhq.vercel.app/join</code>
+      <button class="btn small primary" id="joinbtn" type="button" data-label="Copy">Copy</button>
+    </div>
+  </div>
+  <div id="view"></div>
+  <footer>Photos on the post images: Julien Riedel, Evgeni Tcherkasski, Cassiano K. Wehr, Greta Farnedi, Gowtham AGM, Zetong Li (Unsplash, free to use, credit optional). Placeholders you fill in before sending look like [name], [group link], [channel link] and [one real reason].</footer>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" hidden><span id="toastmsg"></span><button type="button" id="toastundo">Undo</button></div>
+
+<script>
+var JOIN = "https://governorhq.vercel.app/join";
+
+/* Four shelves, grouped by what you are doing */
+var SHELVES = [
+  { title: "Ready to post", sub: "Your next posts", ids: ["stories", "images"] },
+  { title: "Talk to people", sub: "Replies and growth messages", ids: ["funnel", "outreach", "phase0"] },
+  { title: "Run the groups", sub: "Setup, prompts and X links", ids: ["groups", "xlinks"] },
+  { title: "Library", sub: "Earlier posts, captions, bios, ideas", ids: ["launch", "captions", "profiles", "ideas"] }
+];
+
+var META = {
+  stories: { name: "Story posts", tile: "Nine parables, each with WhatsApp, X and Facebook versions.", note: "Open a story, pick the platform, copy. X posts carry no link, so put the join link in a comment or your pinned post. Stories with a post image have an Images tab." },
+  images: { name: "Post images", tile: "Photo cards in two styles, 1080 x 1350.", note: "One image per post in two styles. Pick one, press and hold it (phone) or right-click it (laptop) to save, then post. Mark the one you used." },
+  funnel: { name: "Replies after /join", tile: "What to send after someone reaches out.", note: "Send the first reply, then the share write-up as its own message so they can forward it." },
+  outreach: { name: "Community outreach", tile: "Warm messages to members and the WEB3 ESUT group.", note: "Warm and relatable, for people already in the community and for WEB3 ESUT." },
+  phase0: { name: "Grow to 30 members", tile: "Messages for getting from 6 to 30 members.", note: "Nothing here shows your group size to outsiders." },
+  groups: { name: "Group setup and prompts", tile: "Descriptions, rules, welcomes and weekly prompts.", note: "Facebook group description, rules, welcome and prompts, plus the WhatsApp group welcome and description." },
+  xlinks: { name: "X invite and links", tile: "The pinned invite and link comments for X.", note: "X posts carry no link. The link goes in the pinned post or a comment." },
+  launch: { name: "Launch and earlier posts", tile: "The launch story, statuses and standalone posts.", note: "The launch story, statuses and other standalone posts. Read the line under each title before reusing one." },
+  captions: { name: "Captions and carousels", tile: "16 ways, Sell a skill and the Fence video.", note: "Captions for the 16 ways infographic, the Sell a skill carousel and the Fence video. Check one word of the TikTok caption against what is live." },
+  profiles: { name: "Bios and share write-up", tile: "Bios, LinkedIn text and the member write-up.", note: "Profile text. LinkedIn stays professional with no GovernorHQ pitch. B8 and B9 are the final LinkedIn versions you applied." },
+  ideas: { name: "Ideas and drafts", tile: "Your raw ideas and queued drafts.", note: "Your raw ideas, in your own words, plus the Engager posts that belong in another chat." }
+};
+
+var SEC = {};
+var SECTIONS = [];
+var STORIES = [];
+var POSTS = [];
+var ORDER = ["stories", "images", "funnel", "outreach", "phase0", "groups", "xlinks", "launch", "captions", "profiles", "ideas"];
+function ingest(rows) {
+  SEC = {};
+  ORDER.forEach(function (id) { SEC[id] = { id: id, items: [] }; });
+  rows.forEach(function (r) {
+    if (!SEC[r.section]) return;
+    SEC[r.section].items.push({ _key: r.id, _sec: r.section, tag: r.tag, title: r.title, name: r.name, hint: r.hint, orig: r.orig, text: r.body || "", img: r.img ? "/bank/" + r.img : "", added: r.added });
+  });
+  SECTIONS = ORDER.map(function (id) { return SEC[id]; });
+  STORIES = makeStories();
+  POSTS = makePosts();
+  STORIES.forEach(function (st) {
+    st.post = null;
+    POSTS.forEach(function (p) { if (norm(p.name).indexOf(norm(st.name)) === 0) st.post = p; });
+  });
+}
+
+/* stories: one card per number, one tab per platform */
+function makeStories() {
+  var map = {}, order = [];
+  SEC.stories.items.forEach(function (m) {
+    var t = String(m.tag);
+    var parts = m.title.split(", ");
+    if (!map[t]) { map[t] = { no: t, name: parts[0], vars: [] }; order.push(t); }
+    var plat = parts.slice(1).join(", ");
+    map[t].vars.push({ label: plat === "X (fuller)" ? "X longer" : plat, m: m });
+  });
+  return order.map(function (t) { return map[t]; });
+}
+
+/* images: one set per post, two styles */
+function makePosts() {
+  var map = {}, order = [];
+  SEC.images.items.forEach(function (m) {
+    var n = m.title.split(":")[0];
+    if (!map[n]) { map[n] = { name: n, imgs: [] }; order.push(n); }
+    m.style = /A$/.test(m.tag) ? "Style A" : "Style B";
+    map[n].imgs.push(m);
+  });
+  return order.map(function (n) { return map[n]; });
+}
+function norm(s) { return s.toLowerCase().replace(/[^a-z]/g, ""); }
+var marks = {}, filter = "todo", view = "home", query = "";
+var openRows = {}, storyTab = {};
+
+function isUsed(m) { return !!marks[m._key]; }
+function isNew(m) {
+  if (!m.added) return false;
+  return (Date.now() - new Date(m.added + "T00:00:00").getTime()) < 7 * 86400000;
+}
+function storyState(st) {
+  var u = st.vars.filter(function (v) { return isUsed(v.m); }).length;
+  return u === 0 ? "queued" : (u === st.vars.length ? "posted" : "partial");
+}
+function postUsed(p) { return p.imgs.some(isUsed); }
+
+function counts(id) {
+  var todo = 0, used = 0, fresh = 0;
+  if (id === "stories") {
+    STORIES.forEach(function (st) { if (storyState(st) === "posted") used++; else todo++; });
+  } else if (id === "images") {
+    POSTS.forEach(function (p) { if (postUsed(p)) used++; else { todo++; if (p.imgs.some(isNew)) fresh++; } });
+  } else {
+    SEC[id].items.forEach(function (m) { if (isUsed(m)) used++; else { todo++; if (isNew(m)) fresh++; } });
+  }
+  return { todo: todo, used: used, total: todo + used, fresh: fresh };
+}
+
+function $(s) { return document.querySelector(s); }
+function el(tag, cls, text) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+/* clipboard */
+function copyText(text, btn, sel) {
+  var label = btn.getAttribute("data-label") || "Copy";
+  function ok() {
+    btn.textContent = "Copied";
+    btn.classList.add("done");
+    setTimeout(function () { btn.textContent = label; btn.classList.remove("done"); }, 1600);
+  }
+  function fallback() {
+    if (sel) {
+      var range = document.createRange();
+      range.selectNodeContents(sel);
+      var s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(range);
+    }
+    btn.textContent = "Selected, press copy";
+    setTimeout(function () { btn.textContent = label; }, 2400);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, fallback);
+  else fallback();
+}
+
+/* marking */
+var toastTimer = null;
+function toast(msg, undo, label) {
+  var t = $("#toast");
+  $("#toastmsg").textContent = msg;
+  var u = $("#toastundo");
+  u.textContent = label || "Undo";
+  u.onclick = function () { t.hidden = true; undo(); };
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.hidden = true; }, 6000);
+}
+function setMark(m, on, quiet) {
+  var key = m._key;
+  var before = marks[key];
+  if (on) marks[key] = { at: new Date().toISOString() }; else delete marks[key];
+  render(true);
+  if (on && !quiet) toast("Marked posted. It moved to Posted.", function () { setMark(m, false, true); });
+  function revert() {
+    if (before) marks[key] = before; else delete marks[key];
+    render(true);
+    toast("Could not save that. Check your connection.", function () { setMark(m, on, true); }, "Retry");
+  }
+  api("POST", { action: "mark", key: key, on: !!on }).then(function (r) {
+    if (r.status === 401) { showLock("Your session ended. Enter the passcode again."); return; }
+    if (!r.ok) revert();
+  }, revert);
+}
+
+/* text with highlighted [placeholders] */
+var PH = /(\[[^\]]+\])/g;
+function fillText(pre, text) {
+  text.split(PH).forEach(function (part, i) {
+    if (i % 2 === 1) pre.appendChild(el("span", "ph", part));
+    else pre.appendChild(document.createTextNode(part));
+  });
+}
+
+function textBlock(m) {
+  var wrap = el("div", null);
+  wrap.style.display = "grid";
+  wrap.style.gap = "12px";
+  var pre = el("pre", "text");
+  fillText(pre, m.text);
+  wrap.appendChild(pre);
+  if (/\[[^\]]+\]/.test(m.text)) {
+    var f = el("p", "fillnote");
+    f.appendChild(document.createTextNode("Fill in the "));
+    f.appendChild(el("span", "ph", "[highlighted]"));
+    f.appendChild(document.createTextNode(" parts before you send."));
+    wrap.appendChild(f);
+  }
+  var act = el("div", "actions");
+  var cp = el("button", "btn primary", "Copy");
+  cp.type = "button";
+  cp.setAttribute("data-label", "Copy");
+  cp.addEventListener("click", function () { copyText(m.text, cp, pre); });
+  var used = isUsed(m);
+  var mk = el("button", "btn ghost" + (used ? " ok-on" : ""), used ? "Posted. Undo" : "Mark posted");
+  mk.type = "button";
+  mk.addEventListener("click", function () { setMark(m, !used); });
+  act.appendChild(cp);
+  act.appendChild(mk);
+  wrap.appendChild(act);
+  return wrap;
+}
+
+function history(m) {
+  if (!m.orig || m.orig === m.hint) return null;
+  var d = el("details", "hist");
+  d.appendChild(el("summary", null, "Where this came from"));
+  d.appendChild(el("p", null, m.orig));
+  return d;
+}
+
+/* one accordion row for any message */
+function rowEl(m, crumb) {
+  var used = isUsed(m);
+  var open = !!openRows[m._key];
+  var row = el("article", "row" + (used ? " is-used" : "") + (open ? " open" : ""));
+  var head = el("button", "row-head");
+  head.type = "button";
+  head.setAttribute("aria-expanded", open ? "true" : "false");
+  var tag = el("span", "tag", m.tag);
+  var main = el("span", "row-main");
+  if (crumb) main.appendChild(el("span", "crumb", crumb));
+  main.appendChild(el("span", "row-title", m.name));
+  if (m.hint) main.appendChild(el("span", "row-hint", m.hint));
+  head.appendChild(tag);
+  head.appendChild(main);
+  if (used) head.appendChild(el("span", "chip posted", "Posted"));
+  else if (isNew(m)) head.appendChild(el("span", "chip new", "New"));
+  head.appendChild(el("span", "chev"));
+  head.addEventListener("click", function () { openRows[m._key] = !open; render(true); });
+  row.appendChild(head);
+  if (open) {
+    var body = el("div", "row-body");
+    if (m.text) body.appendChild(textBlock(m));
+    var h = history(m);
+    if (h) body.appendChild(h);
+    row.appendChild(body);
+  }
+  return row;
+}
+
+/* story card */
+function storyEl(st) {
+  var state = storyState(st);
+  var okey = "story-" + st.no;
+  var open = !!openRows[okey];
+  var card = el("article", "story" + (open ? " open" : "") + (state === "posted" ? " is-posted" : ""));
+  var head = el("button", "story-head");
+  head.type = "button";
+  head.setAttribute("aria-expanded", open ? "true" : "false");
+  head.appendChild(el("span", "story-no", st.no));
+  var main = el("span", "story-main");
+  main.appendChild(el("strong", null, st.name));
+  var first = st.vars[0].m.text.replace(/\s+/g, " ").trim();
+  main.appendChild(el("span", null, first.length > 90 ? first.slice(0, 88) + "..." : first));
+  head.appendChild(main);
+  head.appendChild(el("span", "chip " + (state === "queued" ? "" : state), state === "queued" ? "Queued" : (state === "posted" ? "Posted" : "Partly posted")));
+  head.appendChild(el("span", "chev"));
+  head.addEventListener("click", function () { openRows[okey] = !open; render(true); });
+  card.appendChild(head);
+  if (!open) return card;
+
+  var body = el("div", "story-body");
+  var labels = st.vars.map(function (v) { return v.label; });
+  if (st.post) labels.push("Images");
+  var cur = storyTab[st.no];
+  if (labels.indexOf(cur) < 0) cur = labels[0];
+  var tabs = el("div", "tabs");
+  tabs.setAttribute("role", "tablist");
+  labels.forEach(function (lb) {
+    var b = el("button", null);
+    b.type = "button";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", lb === cur ? "true" : "false");
+    var v = st.vars.filter(function (x) { return x.label === lb; })[0];
+    if (v) b.appendChild(el("span", "dot" + (isUsed(v.m) ? " on" : "")));
+    b.appendChild(document.createTextNode(lb));
+    b.addEventListener("click", function () { storyTab[st.no] = lb; render(true); });
+    tabs.appendChild(b);
+  });
+  body.appendChild(tabs);
+
+  if (cur === "Images") {
+    var grid = el("div", "imgs");
+    st.post.imgs.forEach(function (im) {
+      var fig = el("figure", isUsed(im) ? "is-used" : "");
+      var img = el("img");
+      img.src = im.img; img.alt = st.name + " post image, " + im.style; img.loading = "lazy";
+      fig.appendChild(img);
+      var cap = el("figcaption", null);
+      cap.appendChild(el("span", null, im.style));
+      var u = isUsed(im);
+      var mk = el("button", "btn small ghost" + (u ? " ok-on" : ""), u ? "Used. Undo" : "Mark used");
+      mk.type = "button";
+      mk.addEventListener("click", function () { setMark(im, !u); });
+      cap.appendChild(mk);
+      fig.appendChild(cap);
+      grid.appendChild(fig);
+    });
+    body.appendChild(grid);
+    body.appendChild(el("p", "fillnote", "Press and hold an image (phone) or right-click it (laptop) to save it."));
+  } else {
+    var vv = st.vars.filter(function (x) { return x.label === cur; })[0];
+    body.appendChild(textBlock(vv.m));
+    if (/^X/.test(vv.label)) body.appendChild(el("p", "fillnote", "X posts carry no link. Put the join link in a comment or your pinned post."));
+    var h = history(vv.m);
+    if (h) body.appendChild(h);
+  }
+  card.appendChild(body);
+  return card;
+}
+
+/* image gallery card (images section) */
+function postEl(p) {
+  var used = postUsed(p);
+  var okey = "post-" + p.name;
+  var open = openRows[okey] !== false;
+  var card = el("article", "story" + (open ? " open" : "") + (used ? " is-posted" : ""));
+  var head = el("button", "story-head");
+  head.type = "button";
+  head.setAttribute("aria-expanded", open ? "true" : "false");
+  var main = el("span", "story-main");
+  main.appendChild(el("strong", null, p.name));
+  main.appendChild(el("span", null, "Two styles, 1080 x 1350"));
+  head.appendChild(main);
+  if (used) head.appendChild(el("span", "chip posted", "Used"));
+  else if (p.imgs.some(isNew)) head.appendChild(el("span", "chip new", "New"));
+  head.appendChild(el("span", "chev"));
+  head.addEventListener("click", function () { openRows[okey] = !open; render(true); });
+  card.appendChild(head);
+  if (open) {
+    var body = el("div", "story-body");
+    var grid = el("div", "imgs");
+    p.imgs.forEach(function (im) {
+      var fig = el("figure", isUsed(im) ? "is-used" : "");
+      var img = el("img");
+      img.src = im.img; img.alt = p.name + " post image, " + im.style; img.loading = "lazy";
+      fig.appendChild(img);
+      var cap = el("figcaption", null);
+      cap.appendChild(el("span", null, im.style));
+      var u = isUsed(im);
+      var mk = el("button", "btn small ghost" + (u ? " ok-on" : ""), u ? "Used. Undo" : "Mark used");
+      mk.type = "button";
+      mk.addEventListener("click", function () { setMark(im, !u); });
+      cap.appendChild(mk);
+      fig.appendChild(cap);
+      grid.appendChild(fig);
+    });
+    body.appendChild(grid);
+    card.appendChild(body);
+  }
+  return card;
+}
+
+/* views */
+function go(id) {
+  view = id;
+  try { location.hash = id === "home" ? "" : id; } catch (e) {}
+  window.scrollTo(0, 0);
+  render();
+}
+function parseHash() {
+  var h = (location.hash || "").replace(/^#/, "");
+  return SEC[h] ? h : "home";
+}
+window.addEventListener("hashchange", function () {
+  var v = parseHash();
+  if (v !== view) { view = v; window.scrollTo(0, 0); render(); }
+});
+
+function nextUp() {
+  return STORIES.filter(function (st) { return storyState(st) !== "posted"; });
+}
+
+function renderHome(v) {
+  var q = query.trim().toLowerCase();
+  if (q) return renderSearch(v, q);
+
+  var queued = nextUp();
+  var b1 = el("section", "block");
+  var t1 = el("div", "block-title");
+  t1.appendChild(el("h2", null, "Next up"));
+  t1.appendChild(el("p", null, queued.length ? "Stories you have not posted yet" : ""));
+  b1.appendChild(t1);
+  var nx = el("div", "next");
+  if (!queued.length) nx.appendChild(el("p", "empty", "Every story is posted. Add the next one in your studio chat."));
+  queued.slice(0, 3).forEach(function (st) {
+    var it = el("div", "next-item");
+    it.appendChild(el("span", "num", st.no));
+    var mid = el("span", "mid");
+    mid.appendChild(el("strong", null, st.name));
+    var first = st.vars[0].m.text.replace(/\s+/g, " ").trim();
+    mid.appendChild(el("span", null, first));
+    it.appendChild(mid);
+    var b = el("button", "btn small primary", "Open");
+    b.type = "button";
+    b.addEventListener("click", function () { openRows["story-" + st.no] = true; go("stories"); });
+    it.appendChild(b);
+    nx.appendChild(it);
+  });
+  b1.appendChild(nx);
+  v.appendChild(b1);
+
+  SHELVES.forEach(function (sh) {
+    var b = el("section", "block");
+    var t = el("div", "block-title");
+    t.appendChild(el("h2", null, sh.title));
+    t.appendChild(el("p", null, sh.sub));
+    b.appendChild(t);
+    var grid = el("div", "tiles");
+    sh.ids.forEach(function (id) {
+      var c = counts(id);
+      var tile = el("button", "tile" + (c.todo ? "" : " zero"));
+      tile.type = "button";
+      var top = el("span", "tile-top");
+      top.appendChild(el("h3", null, META[id].name));
+      var cnt = el("span", "count", String(c.todo));
+      cnt.appendChild(el("small", null, "to use"));
+      top.appendChild(cnt);
+      tile.appendChild(top);
+      tile.appendChild(el("p", null, META[id].tile));
+      var mt = el("span", "meter");
+      var bar = el("i");
+      bar.style.width = (c.total ? Math.round(c.used / c.total * 100) : 0) + "%";
+      mt.appendChild(bar);
+      tile.appendChild(mt);
+      var foot = el("span", "tile-foot");
+      foot.appendChild(document.createTextNode(c.used + " posted of " + c.total));
+      if (c.fresh) foot.appendChild(el("span", "chip new", "New"));
+      tile.appendChild(foot);
+      tile.addEventListener("click", function () { go(id); });
+      grid.appendChild(tile);
+    });
+    b.appendChild(grid);
+    v.appendChild(b);
+  });
+}
+
+function renderSearch(v, q) {
+  var tokens = q.split(/\s+/);
+  var hits = [];
+  SECTIONS.forEach(function (s) {
+    if (s.id === "images") return;
+    s.items.forEach(function (m) {
+      var hay = (m.name + " " + m.hint + " " + m.tag + " " + (m.text || "") + " " + META[s.id].name).toLowerCase();
+      if (tokens.every(function (t) { return hay.indexOf(t) >= 0; })) hits.push(m);
+    });
+  });
+  var b = el("section", "block");
+  var t = el("div", "block-title");
+  t.appendChild(el("h2", null, "Search results"));
+  t.appendChild(el("p", null, hits.length + (hits.length === 1 ? " match" : " matches")));
+  b.appendChild(t);
+  var list = el("div", "list");
+  list.style.marginTop = "0";
+  if (!hits.length) list.appendChild(el("p", "empty", "Nothing matches that. Try one word, like fence or welcome."));
+  hits.slice(0, 40).forEach(function (m) { list.appendChild(rowEl(m, META[m._sec].name)); });
+  b.appendChild(list);
+  v.appendChild(b);
+}
+
+function renderSection(v, id) {
+  var s = SEC[id];
+  var bar = el("div", "topbar");
+  var back = el("button", "back", "← All messages");
+  back.type = "button";
+  back.addEventListener("click", function () { go("home"); });
+  bar.appendChild(back);
+  bar.appendChild(el("span", "where", META[id].name));
+  v.appendChild(bar);
+
+  var head = el("div", "sec-head");
+  head.appendChild(el("h2", null, META[id].name));
+  head.appendChild(el("p", null, META[id].note));
+  v.appendChild(head);
+
+  var c = counts(id);
+  var seg = el("div", "seg");
+  seg.setAttribute("role", "group");
+  seg.setAttribute("aria-label", "Show");
+  [["todo", "To use", c.todo], ["used", "Posted", c.used], ["all", "All", c.total]].forEach(function (f) {
+    var b = el("button", null, f[1]);
+    b.type = "button";
+    b.setAttribute("aria-pressed", filter === f[0] ? "true" : "false");
+    b.appendChild(el("b", null, String(f[2])));
+    b.addEventListener("click", function () { filter = f[0]; render(true); });
+    seg.appendChild(b);
+  });
+  v.appendChild(seg);
+
+  var list = el("div", "list");
+  var shown = 0;
+  function pass(usedFlag, partial) {
+    if (filter === "all") return true;
+    if (filter === "todo") return !usedFlag;
+    return usedFlag || partial;
+  }
+  if (id === "stories") {
+    var arr = STORIES.slice().sort(function (a, b) {
+      var order = { queued: 0, partial: 1, posted: 2 };
+      return order[storyState(a)] - order[storyState(b)];
+    });
+    arr.forEach(function (st) {
+      var z = storyState(st);
+      if (!pass(z === "posted", z === "partial")) return;
+      shown++;
+      list.appendChild(storyEl(st));
+    });
+  } else if (id === "images") {
+    POSTS.forEach(function (p) {
+      if (!pass(postUsed(p), false)) return;
+      shown++;
+      list.appendChild(postEl(p));
+    });
+  } else {
+    s.items.forEach(function (m) {
+      if (!pass(isUsed(m), false)) return;
+      shown++;
+      list.appendChild(rowEl(m));
+    });
+  }
+  if (!shown) list.appendChild(el("p", "empty", filter === "used" ? "Nothing marked posted here yet." : "Everything here is posted. Nothing left to use."));
+  v.appendChild(list);
+}
+
+function render(keepScroll) {
+  if (!SECTIONS.length) return;
+  var y = window.scrollY;
+  var home = view === "home";
+  $("#top").hidden = !home;
+  var v = $("#view");
+  v.textContent = "";
+  if (home) renderHome(v); else renderSection(v, view);
+  var tt = 0, tu = 0;
+  Object.keys(META).forEach(function (id) { var c = counts(id); tt += c.todo; tu += c.used; });
+  var g = $("#glance");
+  g.textContent = "";
+  [[tt, "ready to use"], [tu, "posted"]].forEach(function (p) {
+    var sp = el("span");
+    sp.appendChild(el("b", null, String(p[0])));
+    sp.appendChild(document.createTextNode(" " + p[1]));
+    g.appendChild(sp);
+  });
+  if (keepScroll === true) window.scrollTo(0, y);
+}
+
+$("#q").addEventListener("input", function (e) { query = e.target.value; render(); });
+$("#joinbtn").addEventListener("click", function () { copyText(JOIN, $("#joinbtn"), $("#joincode")); });
+
+function api(method, body) {
+  var opt = { method: method, credentials: "same-origin", headers: {} };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  return fetch("/api/bank", opt).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, json: j }; });
+  });
+}
+function showLock(msg) {
+  $("#app").hidden = true;
+  $("#lock").hidden = false;
+  $("#lockmsg").textContent = msg || "";
+  $("#toast").hidden = true;
+}
+function showApp() {
+  $("#lock").hidden = true;
+  $("#app").hidden = false;
+}
+function load(initial) {
+  return api("GET").then(function (r) {
+    if (r.status === 401) { if (initial || !$("#app").hidden) showLock(); return; }
+    if (r.status === 503) { showLock("The private page is not set up yet. Add BANK_PASSCODE in Vercel."); return; }
+    if (!r.ok) { if (initial) showLock("Could not load. Check your connection and try again."); return; }
+    ingest(r.json.items || []);
+    marks = {};
+    Object.keys(r.json.marks || {}).forEach(function (k) { marks[k] = { at: r.json.marks[k] }; });
+    showApp();
+    view = parseHash();
+    render(!initial);
+  }, function () { if (initial) showLock("No connection. Try again."); });
+}
+$("#lockform").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var pc = $("#pc").value;
+  if (!pc) return;
+  var btn = $("#lockbtn");
+  btn.disabled = true;
+  api("POST", { action: "login", passcode: pc }).then(function (r) {
+    btn.disabled = false;
+    if (r.ok) { $("#pc").value = ""; $("#lockmsg").textContent = ""; load(true); }
+    else if (r.status === 429) showLock("Too many wrong tries. Try again in an hour.");
+    else if (r.status === 401) showLock("That is not the passcode." + (typeof r.json.left === "number" ? " " + r.json.left + " tries left." : ""));
+    else if (r.status === 503) showLock("The private page is not set up yet. Add BANK_PASSCODE in Vercel.");
+    else showLock("Something went wrong. Try again.");
+  }, function () { btn.disabled = false; showLock("No connection. Try again."); });
+});
+$("#logout").addEventListener("click", function () {
+  api("POST", { action: "logout" }).then(function () { SECTIONS = []; marks = {}; showLock(); });
+});
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && !$("#app").hidden) load(false);
+});
+load(true);
+</script>
+</body>
+</html>
