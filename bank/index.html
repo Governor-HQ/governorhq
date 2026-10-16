@@ -122,6 +122,15 @@
   .text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font-family: var(--body); font-size: 0.95rem; line-height: 1.55; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px; user-select: all; }
   .text .ph { background: var(--gold-soft); color: var(--gold); border-radius: 4px; padding: 0 3px; font-weight: 500; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fill { display: grid; gap: 10px; }
+  .fill label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+  .fill-row { display: flex; gap: 8px; }
+  .fill input, .saved input { flex: 1; min-width: 0; font: inherit; font-size: 0.95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .fill input:focus, .saved input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .saved { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .saved > summary { cursor: pointer; padding: 11px 14px; font-size: 0.875rem; font-weight: 600; }
+  .saved-body { display: grid; gap: 12px; padding: 0 14px 14px; }
+  .saved-body p { margin: 0; font-size: 0.82rem; color: var(--muted); }
   .fillnote { color: var(--muted); font-size: 0.82rem; }
   .fillnote .ph { background: var(--gold-soft); color: var(--gold); border-radius: 4px; padding: 0 3px; }
   details.hist { color: var(--muted); font-size: 0.8rem; }
@@ -193,6 +202,7 @@
       <code id="joincode">https://governorhq.vercel.app/join</code>
       <button class="btn small primary" id="joinbtn" type="button" data-label="Copy">Copy</button>
     </div>
+    <details class="saved" id="saved"><summary>Saved details</summary><div class="saved-body" id="savedbody"></div></details>
   </div>
   <div id="view"></div>
   <footer>Photos on the post images: Julien Riedel, Evgeni Tcherkasski, Cassiano K. Wehr, Greta Farnedi, Gowtham AGM, Zetong Li (Unsplash, free to use, credit optional). Placeholders you fill in before sending look like [name], [group link], [channel link] and [one real reason].</footer>
@@ -361,10 +371,66 @@ function setMark(m, on, quiet) {
 
 /* text with highlighted [placeholders] */
 var PH = /(\[[^\]]+\])/g;
-function fillText(pre, text) {
-  text.split(PH).forEach(function (part, i) {
-    if (i % 2 === 1) pre.appendChild(el("span", "ph", part));
-    else pre.appendChild(document.createTextNode(part));
+var FIXED = ["group link", "channel link"];
+var VARS = {}, LOCAL = {};
+function phKey(part) { return part.slice(1, -1).trim().toLowerCase(); }
+function valueFor(m, key) { return VARS[key] || LOCAL[m._key + "|" + key] || ""; }
+function resolveText(m) {
+  return m.text.split(PH).map(function (part, i) {
+    if (i % 2 === 1) return valueFor(m, phKey(part)) || part;
+    return part;
+  }).join("");
+}
+function fillText(pre, m) {
+  pre.textContent = "";
+  m.text.split(PH).forEach(function (part, i) {
+    if (i % 2 === 1) {
+      var v = valueFor(m, phKey(part));
+      if (v) pre.appendChild(document.createTextNode(v));
+      else pre.appendChild(el("span", "ph", part));
+    } else pre.appendChild(document.createTextNode(part));
+  });
+}
+function saveVar(key, value, done) {
+  var before = VARS[key];
+  if (value) VARS[key] = value; else delete VARS[key];
+  api("POST", { action: "setvar", key: key.replace(/ /g, "_"), value: value }).then(function (r) {
+    if (r.status === 401) { showLock("Your session ended. Enter the passcode again."); return; }
+    if (!r.ok) {
+      if (before) VARS[key] = before; else delete VARS[key];
+      toast("Could not save that. Check your connection.", function () { saveVar(key, value, done); }, "Retry");
+    }
+    if (done) done(r.ok);
+  }, function () {
+    if (before) VARS[key] = before; else delete VARS[key];
+    toast("Could not save that. Check your connection.", function () { saveVar(key, value, done); }, "Retry");
+    if (done) done(false);
+  });
+}
+function renderSaved() {
+  var box = $("#savedbody");
+  box.textContent = "";
+  box.appendChild(el("p", null, "Details that stay the same. Save them once and every message fills them in for you."));
+  FIXED.forEach(function (key) {
+    var lab = el("label", null, key.charAt(0).toUpperCase() + key.slice(1));
+    var row = el("div", "fill-row");
+    var inp = el("input");
+    inp.type = "url";
+    inp.placeholder = "Paste the " + key;
+    inp.value = VARS[key] || "";
+    inp.setAttribute("autocomplete", "off");
+    var b = el("button", "btn small primary", "Save");
+    b.type = "button";
+    b.setAttribute("data-label", "Save");
+    b.addEventListener("click", function () {
+      saveVar(key, inp.value.trim(), function (ok) {
+        if (ok) { b.textContent = "Saved"; setTimeout(function () { b.textContent = "Save"; }, 1600); render(true); }
+      });
+    });
+    row.appendChild(inp);
+    row.appendChild(b);
+    lab.appendChild(row);
+    box.appendChild(lab);
   });
 }
 
@@ -373,20 +439,44 @@ function textBlock(m) {
   wrap.style.display = "grid";
   wrap.style.gap = "12px";
   var pre = el("pre", "text");
-  fillText(pre, m.text);
+  fillText(pre, m);
   wrap.appendChild(pre);
-  if (/\[[^\]]+\]/.test(m.text)) {
-    var f = el("p", "fillnote");
-    f.appendChild(document.createTextNode("Fill in the "));
-    f.appendChild(el("span", "ph", "[highlighted]"));
-    f.appendChild(document.createTextNode(" parts before you send."));
+  var keys = [];
+  m.text.split(PH).forEach(function (part, i) {
+    var k = phKey(part);
+    if (i % 2 === 1 && !VARS[k] && keys.indexOf(k) < 0) keys.push(k);
+  });
+  if (keys.length) {
+    var f = el("div", "fill");
+    keys.forEach(function (k) {
+      var lab = el("label", null, "Fill in: " + k);
+      var row = el("div", "fill-row");
+      var inp = el("input");
+      inp.type = "text";
+      inp.value = LOCAL[m._key + "|" + k] || "";
+      inp.setAttribute("autocomplete", "off");
+      inp.addEventListener("input", function () { LOCAL[m._key + "|" + k] = inp.value.trim(); fillText(pre, m); });
+      row.appendChild(inp);
+      if (FIXED.indexOf(k) >= 0) {
+        var sv = el("button", "btn small ghost", "Save for all");
+        sv.type = "button";
+        sv.addEventListener("click", function () {
+          var v = inp.value.trim();
+          if (!v) return;
+          saveVar(k, v, function (ok) { if (ok) { renderSaved(); render(true); } });
+        });
+        row.appendChild(sv);
+      }
+      lab.appendChild(row);
+      f.appendChild(lab);
+    });
     wrap.appendChild(f);
   }
   var act = el("div", "actions");
   var cp = el("button", "btn primary", "Copy");
   cp.type = "button";
   cp.setAttribute("data-label", "Copy");
-  cp.addEventListener("click", function () { copyText(m.text, cp, pre); });
+  cp.addEventListener("click", function () { copyText(resolveText(m), cp, pre); });
   var used = isUsed(m);
   var mk = el("button", "btn ghost" + (used ? " ok-on" : ""), used ? "Posted. Undo" : "Mark posted");
   mk.type = "button";
@@ -768,6 +858,9 @@ function load(initial) {
     if (!r.ok) { if (initial) showLock("Could not load. Check your connection and try again."); return; }
     ingest(r.json.items || []);
     marks = {};
+    VARS = {};
+    Object.keys(r.json.vars || {}).forEach(function (k) { VARS[k.replace(/_/g, " ")] = r.json.vars[k]; });
+    renderSaved();
     Object.keys(r.json.marks || {}).forEach(function (k) { marks[k] = { at: r.json.marks[k] }; });
     showApp();
     view = parseHash();

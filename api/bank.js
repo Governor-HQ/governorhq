@@ -25,7 +25,12 @@ module.exports = async (req, res) => {
     }
     const m = {};
     (marks.data || []).forEach((r) => { m[r.key] = r.at; });
-    return res.status(200).json({ items: items.data || [], marks: m });
+    // Saved details (group link and so on). If the table is not created yet, carry on without them.
+    const vars = {};
+    const sv = await s.supabase.from('bank_vars').select('key, value');
+    if (sv.error) console.error('bank vars read failed:', sv.error.message);
+    else (sv.data || []).forEach((r) => { vars[r.key] = r.value; });
+    return res.status(200).json({ items: items.data || [], marks: m, vars: vars });
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
@@ -44,6 +49,21 @@ module.exports = async (req, res) => {
       : await s.supabase.from('bank_marks').delete().eq('key', key);
     if (result.error) {
       console.error('bank mark failed:', result.error);
+      return res.status(500).json({ error: 'write_failed' });
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.action === 'setvar') {
+    const key = body.key;
+    const value = typeof body.value === 'string' ? body.value.trim() : '';
+    if (typeof key !== 'string' || !/^[a-z0-9_]{1,30}$/.test(key)) return res.status(400).json({ error: 'bad_key' });
+    if (value.length > 500) return res.status(400).json({ error: 'too_long' });
+    const result = value
+      ? await s.supabase.from('bank_vars').upsert({ key: key, value: value, updated_at: new Date().toISOString() })
+      : await s.supabase.from('bank_vars').delete().eq('key', key);
+    if (result.error) {
+      console.error('bank var write failed:', result.error);
       return res.status(500).json({ error: 'write_failed' });
     }
     return res.status(200).json({ ok: true });
