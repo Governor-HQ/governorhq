@@ -152,6 +152,8 @@
   .toast[hidden] { display: none; }
   [hidden] { display: none !important; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .top-actions { display: flex; gap: 8px; }
+  a.btn { text-decoration: none; display: inline-flex; align-items: center; }
   .top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .lock { max-width: 420px; margin: 10vh auto 0; display: grid; gap: 10px; }
   .lock form { display: grid; gap: 12px; margin-top: 8px; }
@@ -180,7 +182,7 @@
   </section>
   <div id="app" hidden>
   <div id="top">
-    <div class="top-row"><p class="eyebrow">GovernorHQ</p><button class="btn small ghost" id="logout" type="button">Sign out</button></div>
+    <div class="top-row"><p class="eyebrow">GovernorHQ</p><span class="top-actions"><a class="btn small ghost" href="/backstage">Backstage</a><button class="btn small ghost" id="logout" type="button">Sign out</button></span></div>
     <h1>Message bank</h1>
     <p class="lede">Open a tile, tap Copy, paste it where you post. When it is out, mark it posted and it moves aside.</p>
     <div class="glance" id="glance" aria-live="polite"></div>
@@ -738,10 +740,10 @@ function render(keepScroll) {
 $("#q").addEventListener("input", function (e) { query = e.target.value; render(); });
 $("#joinbtn").addEventListener("click", function () { copyText(JOIN, $("#joinbtn"), $("#joincode")); });
 
-function api(method, body) {
+function api(method, body, url) {
   var opt = { method: method, credentials: "same-origin", headers: {} };
   if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
-  return fetch("/api/bank", opt).then(function (r) {
+  return fetch(url || "/api/bank", opt).then(function (r) {
     return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, json: j }; });
   });
 }
@@ -759,6 +761,7 @@ function load(initial) {
   return api("GET").then(function (r) {
     if (r.status === 401) { if (initial || !$("#app").hidden) showLock(); return; }
     if (r.status === 503) { showLock("The private page is not set up yet. Add BANK_PASSCODE in Vercel."); return; }
+    if (r.status === 403) { showLock("This account does not have access to the message bank."); return; }
     if (!r.ok) { if (initial) showLock("Could not load. Check your connection and try again."); return; }
     ingest(r.json.items || []);
     marks = {};
@@ -774,7 +777,7 @@ $("#lockform").addEventListener("submit", function (e) {
   if (!pc) return;
   var btn = $("#lockbtn");
   btn.disabled = true;
-  api("POST", { action: "login", passcode: pc }).then(function (r) {
+  api("POST", { action: "login", passcode: pc }, "/api/auth").then(function (r) {
     btn.disabled = false;
     if (r.ok) { $("#pc").value = ""; $("#lockmsg").textContent = ""; load(true); }
     else if (r.status === 429) showLock("Too many wrong tries. Try again in an hour.");
@@ -784,7 +787,7 @@ $("#lockform").addEventListener("submit", function (e) {
   }, function () { btn.disabled = false; showLock("No connection. Try again."); });
 });
 $("#logout").addEventListener("click", function () {
-  api("POST", { action: "logout" }).then(function () { SECTIONS = []; marks = {}; showLock(); });
+  api("POST", { action: "logout" }, "/api/auth").then(function () { SECTIONS = []; marks = {}; showLock(); });
 });
 document.addEventListener("visibilitychange", function () {
   if (document.visibilityState === "visible" && !$("#app").hidden) load(false);

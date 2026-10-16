@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>GovernorHQ Backstage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a lock screen, then a hub of tiles. Each tile opens one private tool; the server decides which tiles you see. Brand colors, dark first. */
+  :root {
+    --bg: #0c0c0e; --surface: #141417; --raise: #1b1b1f; --line: #2a2a30; --ink: #ece7dc; --muted: #a39d90;
+    --gold: #c99a4a; --gold-ink: #0c0c0e; --warn: #e0937f;
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+      --gold: #8a6420; --gold-ink: #ffffff; --warn: #a63d2a; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+    --gold: #8a6420; --gold-ink: #ffffff; --warn: #a63d2a; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 72px; }
+  main { max-width: 860px; margin-inline: auto; }
+  h1, h2, h3, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.05; margin-top: 6px; text-wrap: balance; }
+  .lede { color: var(--muted); margin-top: 8px; max-width: 54ch; }
+  .top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .btn { font-weight: 600; font-size: 0.9rem; border-radius: 8px; padding: 9px 16px; min-height: 42px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+  .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  .btn.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
+  .btn.ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .field { display: block; width: 100%; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; min-height: 48px; }
+  .lock { max-width: 420px; margin: 10vh auto 0; display: grid; gap: 10px; }
+  .lock form { display: grid; gap: 12px; margin-top: 8px; }
+  .lockmsg { color: var(--warn); font-size: 0.9rem; min-height: 1.3em; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 28px; }
+  .tile { display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 124px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; color: inherit; text-decoration: none; }
+  a.tile:hover { border-color: var(--gold); }
+  .tile h2 { font-family: var(--display); font-weight: 600; font-size: 1.25rem; line-height: 1.2; }
+  .tile p { color: var(--muted); font-size: 0.9rem; }
+  .tile .go { margin-top: auto; font-size: 0.85rem; font-weight: 600; color: var(--gold); }
+  .tile.planned { border-style: dashed; opacity: 0.8; }
+  .chip { display: inline-block; width: fit-content; margin-top: auto; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+  .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; margin-top: 28px; }
+  @media (prefers-reduced-motion: no-preference) { .btn, .tile { transition: background 0.15s, border-color 0.15s, color 0.15s; } }
+</style>
+</head>
+<body>
+<main>
+  <section id="lock" class="lock" hidden>
+    <p class="eyebrow">GovernorHQ</p>
+    <h1>Backstage</h1>
+    <p class="lede">Team only. Enter your passcode to continue.</p>
+    <form id="lockform">
+      <label class="sr" for="pc">Passcode</label>
+      <input class="field" id="pc" name="password" type="password" autocomplete="current-password" placeholder="Passcode" required>
+      <button class="btn primary" id="lockbtn" type="submit">Open</button>
+      <p class="lockmsg" id="lockmsg" role="alert"></p>
+    </form>
+  </section>
+  <div id="app" hidden>
+    <div class="top-row"><p class="eyebrow">GovernorHQ</p><button class="btn small ghost" id="logout" type="button">Sign out</button></div>
+    <h1>Backstage</h1>
+    <p class="lede">Your private tools. You only see the ones you have access to.</p>
+    <div class="tiles" id="tiles"></div>
+  </div>
+</main>
+<script>
+function $(s) { return document.querySelector(s); }
+function el(tag, cls, text) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function api(method, body) {
+  var opt = { method: method, credentials: "same-origin", headers: {} };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  return fetch("/api/auth", opt).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, json: j }; });
+  });
+}
+function showLock(msg) {
+  $("#app").hidden = true;
+  $("#lock").hidden = false;
+  $("#lockmsg").textContent = msg || "";
+}
+function showTools(tools) {
+  var box = $("#tiles");
+  box.textContent = "";
+  if (!tools.length) {
+    box.appendChild(el("p", "empty", "No tools are available for this account yet."));
+  }
+  tools.forEach(function (t) {
+    var tile;
+    if (t.href && !t.planned) {
+      tile = el("a", "tile");
+      tile.href = t.href;
+    } else {
+      tile = el("div", "tile planned");
+    }
+    tile.appendChild(el("h2", null, t.name));
+    tile.appendChild(el("p", null, t.blurb));
+    if (t.href && !t.planned) tile.appendChild(el("span", "go", "Open"));
+    else tile.appendChild(el("span", "chip", "Planned"));
+    box.appendChild(tile);
+  });
+  $("#lock").hidden = true;
+  $("#app").hidden = false;
+}
+function load() {
+  return api("GET").then(function (r) {
+    if (r.status === 401) { showLock(); return; }
+    if (r.status === 503) { showLock("Backstage is not set up yet. Add BANK_PASSCODE in Vercel."); return; }
+    if (!r.ok) { showLock("Could not load. Check your connection and try again."); return; }
+    showTools(r.json.tools || []);
+  }, function () { showLock("No connection. Try again."); });
+}
+$("#lockform").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var pc = $("#pc").value;
+  if (!pc) return;
+  var btn = $("#lockbtn");
+  btn.disabled = true;
+  api("POST", { action: "login", passcode: pc }).then(function (r) {
+    btn.disabled = false;
+    if (r.ok) { $("#pc").value = ""; $("#lockmsg").textContent = ""; load(); }
+    else if (r.status === 429) showLock("Too many wrong tries. Try again in an hour.");
+    else if (r.status === 401) showLock("That is not the passcode." + (typeof r.json.left === "number" ? " " + r.json.left + " tries left." : ""));
+    else if (r.status === 503) showLock("Backstage is not set up yet. Add BANK_PASSCODE in Vercel.");
+    else showLock("Something went wrong. Try again.");
+  }, function () { btn.disabled = false; showLock("No connection. Try again."); });
+});
+$("#logout").addEventListener("click", function () {
+  api("POST", { action: "logout" }).then(function () { showLock(); });
+});
+load();
+</script>
+</body>
+</html>
