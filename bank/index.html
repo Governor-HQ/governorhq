@@ -131,6 +131,7 @@
   .imgs figure { margin: 0; display: grid; gap: 8px; align-content: start; }
   .imgs img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); background: var(--raise); }
   .imgs figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+  .imgs figure.land { grid-column: 1 / -1; }
   .imgs figure.is-used img { opacity: 0.6; }
 
   /* story cards */
@@ -264,7 +265,9 @@ function makePosts() {
   SEC.images.items.forEach(function (m) {
     var n = m.title.split(":")[0];
     if (!map[n]) { map[n] = { name: n, imgs: [] }; order.push(n); }
-    m.style = /A$/.test(m.tag) ? "Style A" : "Style B";
+    var land = /L$/.test(m.tag);
+    m.land = land;
+    m.style = (/AL?$/.test(m.tag) ? "Style A" : "Style B") + (land ? ", landscape" : ", portrait");
     map[n].imgs.push(m);
   });
   return order.map(function (n) { return map[n]; });
@@ -476,7 +479,7 @@ function storyEl(st) {
   if (cur === "Images") {
     var grid = el("div", "imgs");
     st.post.imgs.forEach(function (im) {
-      var fig = el("figure", isUsed(im) ? "is-used" : "");
+      var fig = el("figure", (isUsed(im) ? "is-used" : "") + (im.land ? " land" : ""));
       var img = el("img");
       img.src = im.img; img.alt = st.name + " post image, " + im.style; img.loading = "lazy";
       fig.appendChild(img);
@@ -525,7 +528,7 @@ function postEl(p) {
     var body = el("div", "story-body");
     var grid = el("div", "imgs");
     p.imgs.forEach(function (im) {
-      var fig = el("figure", isUsed(im) ? "is-used" : "");
+      var fig = el("figure", (isUsed(im) ? "is-used" : "") + (im.land ? " land" : ""));
       var img = el("img");
       img.src = im.img; img.alt = p.name + " post image, " + im.style; img.loading = "lazy";
       fig.appendChild(img);
