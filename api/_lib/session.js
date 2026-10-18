@@ -21,6 +21,7 @@ const ROLES = {
 const TOOLS = [
   { id: 'bank', name: 'Message bank', blurb: 'Your drafts and posts, ready to copy.', href: '/bank', needs: 'bank' },
   { id: 'career', name: 'LinkedIn career', blurb: 'Your LinkedIn posts, proof guides and security study.', href: '/career', needs: 'career' },
+  { id: 'knowledge', name: 'Knowledge bank', blurb: 'Your mentor notes, themes and outlines for books and classes.', href: '/knowledge', needs: 'knowledge' },
   { id: 'studio', name: 'Content studio', blurb: 'Carousels, videos and post images.', href: null, planned: true, needs: 'studio' }
 ];
 
