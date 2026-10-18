@@ -1,0 +1,55 @@
+// Private community events data. Needs a signed-in session with the "events" permission.
+// Content lives in Supabase (tables events_items, events_marks), never in this public repo.
+const s = require('./_lib/session');
+
+module.exports = async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
+  if (!s.configured()) return res.status(503).json({ error: 'not_configured' });
+
+  const session = s.getSession(req);
+  if (!session) return res.status(401).json({ error: 'locked' });
+  if (!s.can(session, 'events')) return res.status(403).json({ error: 'no_access' });
+
+  if (req.method === 'GET') {
+    const items = await s.supabase
+      .from('events_items')
+      .select('id, section, pos, tag, title, body, topic, draft')
+      .order('section', { ascending: true })
+      .order('pos', { ascending: true });
+    const marks = await s.supabase.from('events_marks').select('key, at, val');
+    if (items.error || marks.error) {
+      console.error('events read failed:', items.error || marks.error);
+      return res.status(500).json({ error: 'read_failed' });
+    }
+    const m = {}, v = {};
+    (marks.data || []).forEach((r) => { m[r.key] = r.at; if (r.val) v[r.key] = r.val; });
+    return res.status(200).json({ items: items.data || [], marks: m, vals: v });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
+
+  const type = String((req.headers && req.headers['content-type']) || '');
+  if (type.indexOf('application/json') < 0) return res.status(415).json({ error: 'json_only' });
+  let body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
+  if (!body || typeof body !== 'object') return res.status(400).json({ error: 'bad_body' });
+
+  if (body.action === 'mark') {
+    const key = body.key;
+    if (typeof key !== 'string' || !/^[a-z0-9-]{1,60}$/.test(key)) return res.status(400).json({ error: 'bad_key' });
+    const val = typeof body.val === 'string' ? body.val.trim() : '';
+    if (val.length > 300) return res.status(400).json({ error: 'too_long' });
+    const result = body.on
+      ? await s.supabase.from('events_marks').upsert({ key: key, at: new Date().toISOString(), val: val || null })
+      : await s.supabase.from('events_marks').delete().eq('key', key);
+    if (result.error) {
+      console.error('events mark failed:', result.error);
+      return res.status(500).json({ error: 'write_failed' });
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  return res.status(400).json({ error: 'unknown_action' });
+};

@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Community events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: lock screen, then four tabs (Event plan, Topic bank, Session, Challenge). Same brand colors as Backstage, dark first. */
+  :root {
+    --bg: #0c0c0e; --surface: #141417; --raise: #1b1b1f; --line: #2a2a30; --ink: #ece7dc; --muted: #a39d90;
+    --gold: #c99a4a; --gold-ink: #0c0c0e; --warn: #e0937f; --ok: #7fb58a;
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+      --gold: #8a6420; --gold-ink: #ffffff; --warn: #a63d2a; --ok: #2f6b3d; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f3ec; --surface: #ffffff; --raise: #efebe0; --line: #ddd7c9; --ink: #1d1b17; --muted: #6a6558;
+    --gold: #8a6420; --gold-ink: #ffffff; --warn: #a63d2a; --ok: #2f6b3d; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 72px; }
+  main { max-width: 860px; margin-inline: auto; }
+  h1, h2, h3, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.05; margin-top: 6px; text-wrap: balance; }
+  .lede { color: var(--muted); margin-top: 8px; max-width: 58ch; }
+  .top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top-row .grp { display: flex; gap: 8px; }
+  .btn { font-weight: 600; font-size: 0.9rem; border-radius: 8px; padding: 9px 16px; min-height: 42px; border: 1px solid var(--line); background: transparent; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; color: var(--ink); }
+  .btn.primary { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  .btn.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
+  .btn.ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn[aria-pressed="true"] { border-color: var(--ok); color: var(--ok); }
+  .field { display: block; width: 100%; font-size: 1rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; min-height: 48px; }
+  .lock { max-width: 420px; margin: 10vh auto 0; display: grid; gap: 10px; }
+  .lock form { display: grid; gap: 12px; margin-top: 8px; }
+  .lockmsg { color: var(--warn); font-size: 0.9rem; min-height: 1.3em; }
+  .tabs { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+  .tab { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 8px 16px; min-height: 40px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--muted); }
+  .tab[aria-selected="true"] { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+  .filters { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .filters .tab { min-height: 34px; padding: 4px 12px; font-size: 0.8rem; }
+  .list { display: grid; gap: 12px; margin-top: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .card h2 { font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.25; margin-top: 8px; }
+  .chip { display: inline-block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.done { border-color: var(--ok); color: var(--ok); }
+  .text { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .code { position: relative; margin-top: 12px; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 12px 12px 12px 12px; }
+  .code pre { margin: 0; font-family: var(--mono); font-size: 0.85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .code .btn { margin-top: 10px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  details.card > summary { cursor: pointer; list-style: none; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary h2 { display: inline; }
+  details.card[open] > summary { margin-bottom: 4px; }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .parts { display: grid; gap: 10px; margin-top: 12px; }
+  .parts .card { background: var(--raise); }
+  .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; }
+  .tick { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 0; cursor: pointer; min-height: 44px; }
+  .tick .box { flex: none; width: 22px; height: 22px; margin-top: 1px; border: 2px solid var(--line); border-radius: 6px; display: grid; place-items: center; font-size: 0.8rem; line-height: 1; color: var(--gold-ink); }
+  .tick[aria-pressed="true"] .box { background: var(--ok); border-color: var(--ok); }
+  .tick[aria-pressed="true"] .lbl { color: var(--muted); text-decoration: line-through; }
+  .tick .hint { display: block; color: var(--muted); font-size: 0.85rem; text-decoration: none; }
+  .ticks { display: grid; margin-top: 8px; }
+  .bar { height: 6px; border-radius: 99px; background: var(--raise); overflow: hidden; margin-top: 10px; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .fill { display: grid; gap: 8px; margin-top: 12px; }
+  .fill label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+  .fill .row { display: flex; gap: 8px; }
+  .fill input { flex: 1; min-width: 0; font-size: 0.95rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+  .ph { background: rgba(201,154,74,0.16); color: var(--gold); border-radius: 4px; padding: 0 3px; }
+  .chip.draft { border-color: var(--warn); color: var(--warn); }
+  .chip.first { border-color: var(--gold); color: var(--gold); }
+  .row2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .topic .name { font-family: var(--display); font-weight: 600; font-size: 1.05rem; line-height: 1.3; margin-top: 6px; }
+  .summary { color: var(--muted); font-size: 0.9rem; margin-top: 14px; }
+  @media (prefers-reduced-motion: no-preference) { .btn, .tab { transition: background 0.15s, border-color 0.15s, color 0.15s; } }
+</style>
+</head>
+<body>
+<main>
+  <section id="lock" class="lock" hidden>
+    <p class="eyebrow">GovernorHQ</p>
+    <h1>Community events</h1>
+    <p class="lede">Team only. Enter your passcode to continue.</p>
+    <form id="lockform">
+      <label class="sr" for="pc">Passcode</label>
+      <input class="field" id="pc" name="password" type="password" autocomplete="current-password" placeholder="Passcode" required>
+      <button class="btn primary" id="lockbtn" type="submit">Open</button>
+      <p class="lockmsg" id="lockmsg" role="alert"></p>
+    </form>
+  </section>
+  <div id="app" hidden>
+    <div class="top-row">
+      <a class="btn small ghost" href="/backstage">Backstage</a>
+      <button class="btn small ghost" id="logout" type="button">Sign out</button>
+    </div>
+    <p class="eyebrow" style="margin-top:18px">GovernorHQ</p>
+    <h1>Community events</h1>
+    <p class="lede">Your event plan, the topic bank, the session outline and the challenge outline. Drafts are marked until you approve them.</p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="filters" id="filters" hidden></div>
+    <div class="list" id="list"></div>
+  </div>
+</main>
+<script>
+function $(s) { return document.querySelector(s); }
+function el(tag, cls, text) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+var TABS = [
+  { id: "plan", label: "Event plan" },
+  { id: "topics", label: "Topic bank" },
+  { id: "session", label: "Session" },
+  { id: "challenge", label: "Challenge" }
+];
+var GROUPS = ["Income", "Tech and starting", "Learning", "Growth", "Formats"];
+var SAVED = ["telegram link"];
+var items = [], marks = {}, vals = {}, LOCAL = {}, tab = "plan", tfilter = "all", openIds = {};
+
+function call(url, method, body) {
+  var opt = { method: method, credentials: "same-origin", headers: {} };
+  if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  return fetch(url, opt).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, json: j }; });
+  });
+}
+function showLock(msg) {
+  $("#app").hidden = true;
+  $("#lock").hidden = false;
+  $("#lockmsg").textContent = msg || "";
+}
+function copyText(text, btn) {
+  var done = function () {
+    var old = btn.getAttribute("data-label") || btn.textContent;
+    btn.setAttribute("data-label", old);
+    btn.textContent = "Copied";
+    setTimeout(function () { btn.textContent = old; }, 1400);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+  } else { fallbackCopy(text); done(); }
+}
+function fallbackCopy(text) {
+  var t = document.createElement("textarea");
+  t.value = text;
+  t.setAttribute("readonly", "");
+  t.style.position = "fixed";
+  t.style.opacity = "0";
+  document.body.appendChild(t);
+  t.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(t);
+}
+
+/* saved ticks, approvals, sent marks and saved details all live in one marks table */
+function isOn(key) { return !!marks[key]; }
+function setKey(key, on, val, after) {
+  var before = marks[key], beforeVal = vals[key];
+  if (on) { marks[key] = new Date().toISOString(); if (val) vals[key] = val; else delete vals[key]; }
+  else { delete marks[key]; delete vals[key]; }
+  render();
+  function revert() {
+    if (before) marks[key] = before; else delete marks[key];
+    if (beforeVal) vals[key] = beforeVal; else delete vals[key];
+    render();
+  }
+  call("/api/events", "POST", { action: "mark", key: key, on: !!on, val: val || "" }).then(function (r) {
+    if (r.status === 401) { showLock("Your session ended. Enter the passcode again."); return; }
+    if (!r.ok) revert();
+    else if (after) after();
+  }, revert);
+}
+
+var PHRE = /(\[[^\]]+\])/g;
+function slug(k) { return k.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function valueOf(k) { return vals["var-" + slug(k)] || LOCAL[k] || ""; }
+function resolve(text) {
+  return text.split(PHRE).map(function (p, i) {
+    if (i % 2 === 1) return valueOf(p.slice(1, -1).trim().toLowerCase()) || p;
+    return p;
+  }).join("");
+}
+function paint(pre, text) {
+  pre.textContent = "";
+  text.split(PHRE).forEach(function (p, i) {
+    if (i % 2 === 1) {
+      var v = valueOf(p.slice(1, -1).trim().toLowerCase());
+      if (v) pre.appendChild(document.createTextNode(v)); else pre.appendChild(el("span", "ph", p));
+    } else pre.appendChild(document.createTextNode(p));
+  });
+}
+function codeBlock(text, box) {
+  var keys = [];
+  text.split(PHRE).forEach(function (p, i) {
+    var k = p.slice(1, -1).trim().toLowerCase();
+    if (i % 2 === 1 && keys.indexOf(k) < 0) keys.push(k);
+  });
+  var wrap = el("div", "code");
+  var pre = el("pre");
+  paint(pre, text);
+  if (keys.length) {
+    var f = el("div", "fill");
+    keys.forEach(function (k) {
+      var lab = el("label", null, "Fill in: " + k);
+      var row = el("div", "row");
+      var inp = el("input");
+      inp.type = "text";
+      inp.value = valueOf(k);
+      inp.setAttribute("autocomplete", "off");
+      inp.addEventListener("input", function () { LOCAL[k] = inp.value.trim(); paint(pre, text); });
+      row.appendChild(inp);
+      if (SAVED.indexOf(k) >= 0) {
+        var sv = el("button", "btn small ghost", "Save for all");
+        sv.type = "button";
+        sv.addEventListener("click", function () {
+          var v = inp.value.trim();
+          if (v) setKey("var-" + slug(k), true, v); else setKey("var-" + slug(k), false);
+        });
+        row.appendChild(sv);
+      }
+      lab.appendChild(row);
+      f.appendChild(lab);
+    });
+    wrap.appendChild(f);
+  }
+  wrap.appendChild(pre);
+  var b = el("button", "btn small ghost", "Copy");
+  b.type = "button";
+  b.addEventListener("click", function () { copyText(resolve(text), b); });
+  wrap.appendChild(b);
+  box.appendChild(wrap);
+}
+/* body text: plain paragraphs, "- " lines become tick rows, ``` blocks become copy boxes */
+function renderBody(it, box) {
+  var parts = String(it.body || "").split("```");
+  var n = 0;
+  parts.forEach(function (seg, i) {
+    if (i % 2 === 1) {
+      codeBlock(seg.replace(/^[^\n]*\n/, "").replace(/\n+$/, ""), box);
+      return;
+    }
+    var lines = seg.replace(/^\n+|\n+$/g, "").split("\n");
+    var plain = [], ticks = null;
+    function flush() { if (plain.length) { box.appendChild(el("div", "text", plain.join("\n"))); plain = []; } }
+    lines.forEach(function (ln) {
+      if (/^- /.test(ln)) {
+        flush();
+        if (!ticks) { ticks = el("div", "ticks"); box.appendChild(ticks); }
+        n++;
+        ticks.appendChild(tickRow("tk-" + it.id + "-" + n, ln.slice(2), ""));
+      } else { ticks = null; plain.push(ln); }
+    });
+    flush();
+  });
+}
+function tickCount(it) {
+  var total = 0, done = 0;
+  String(it.body || "").split("\n").forEach(function (ln) {
+    if (/^- /.test(ln)) { total++; if (isOn("tk-" + it.id + "-" + total)) done++; }
+  });
+  return [done, total];
+}
+function tickRow(key, label, hint) {
+  var on = isOn(key);
+  var b = el("button", "tick");
+  b.type = "button";
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  var box = el("span", "box", on ? "✓" : "");
+  var txt = el("span", "lbl", label);
+  if (hint) txt.appendChild(el("span", "hint", hint));
+  b.appendChild(box);
+  b.appendChild(txt);
+  b.addEventListener("click", function () { setKey(key, !isOn(key)); });
+  return b;
+}
+function draftChip(it) {
+  if (!it.draft) return null;
+  var ok = isOn("ok-" + it.id);
+  return el("span", ok ? "chip done" : "chip draft", ok ? "Approved" : "Draft");
+}
+function approveBtn(it) {
+  if (!it.draft) return null;
+  var ok = isOn("ok-" + it.id);
+  var b = el("button", "btn small ghost", ok ? "Approved. Undo" : "Approve");
+  b.type = "button";
+  b.setAttribute("aria-pressed", ok ? "true" : "false");
+  b.addEventListener("click", function () { setKey("ok-" + it.id, !isOn("ok-" + it.id)); });
+  return b;
+}
+function readCard(it, startOpen) {
+  var d = el("details", "card");
+  d.open = !!openIds[it.id] || !!startOpen;
+  d.addEventListener("toggle", function () { openIds[it.id] = d.open; });
+  var sum = el("summary");
+  var top = el("div", "row2");
+  top.appendChild(el("span", "chip", it.tag));
+  var chip = draftChip(it);
+  if (chip) top.appendChild(chip);
+  sum.appendChild(top);
+  sum.appendChild(el("h2", null, it.title));
+  var tc = tickCount(it);
+  if (tc[1]) sum.appendChild(el("p", "meta", tc[0] + " of " + tc[1] + " done"));
+  d.appendChild(sum);
+  var box = el("div");
+  renderBody(it, box);
+  var acts = el("div", "actions");
+  if (/^CH[1-5]$/.test(it.tag)) {
+    var sk = "sent-" + it.id, sent = isOn(sk);
+    var sb = el("button", "btn small ghost", sent ? "Sent. Undo" : "Mark day sent");
+    sb.type = "button";
+    sb.setAttribute("aria-pressed", sent ? "true" : "false");
+    sb.addEventListener("click", function () { setKey(sk, !isOn(sk)); });
+    acts.appendChild(sb);
+  }
+  var ab = approveBtn(it);
+  if (ab) acts.appendChild(ab);
+  if (acts.children.length) box.appendChild(acts);
+  d.appendChild(box);
+  return d;
+}
+function firstCard(it) {
+  var card = el("article", "card");
+  var top = el("div", "row2");
+  top.appendChild(el("span", "chip first", "First event"));
+  card.appendChild(top);
+  card.appendChild(el("h2", null, it.title));
+  var box = el("div");
+  renderBody(it, box);
+  card.appendChild(box);
+  return card;
+}
+function stepsCard(steps) {
+  var card = el("article", "card");
+  var done = steps.filter(function (s) { return isOn("step-" + s.id); }).length;
+  card.appendChild(el("h2", null, "Steps to the first event"));
+  card.appendChild(el("p", "meta", done + " of " + steps.length + " done"));
+  var bar = el("div", "bar");
+  var fill = el("i");
+  fill.style.width = Math.round(done / steps.length * 100) + "%";
+  bar.appendChild(fill);
+  card.appendChild(bar);
+  var list = el("div", "ticks");
+  steps.forEach(function (s) { list.appendChild(tickRow("step-" + s.id, s.title, s.body)); });
+  card.appendChild(list);
+  return card;
+}
+function topicCard(it) {
+  var card = el("article", "card topic");
+  var top = el("div", "row2");
+  var left = el("span");
+  left.appendChild(el("span", "chip", "#" + it.tag));
+  left.appendChild(document.createTextNode(" "));
+  left.appendChild(el("span", "chip", it.topic));
+  if (it.tag === "1") { left.appendChild(document.createTextNode(" ")); left.appendChild(el("span", "chip first", "First event")); }
+  top.appendChild(left);
+  var done = isOn("topic-" + it.tag + "-done"), planned = isOn("topic-" + it.tag + "-planned");
+  top.appendChild(el("span", done ? "chip done" : "chip", done ? "Done" : (planned ? "Planned" : "Idea")));
+  card.appendChild(top);
+  card.appendChild(el("p", "name", it.title));
+  var acts = el("div", "actions");
+  [["planned", "Planned", planned], ["done", "Done", done]].forEach(function (s) {
+    var b = el("button", "btn small ghost", s[1]);
+    b.type = "button";
+    b.setAttribute("aria-pressed", s[2] ? "true" : "false");
+    b.addEventListener("click", function () { setKey("topic-" + it.tag + "-" + s[0], !isOn("topic-" + it.tag + "-" + s[0])); });
+    acts.appendChild(b);
+  });
+  card.appendChild(acts);
+  return card;
+}
+function renderTabs() {
+  var box = $("#tabs");
+  box.textContent = "";
+  TABS.forEach(function (t) {
+    var b = el("button", "tab", t.label);
+    b.type = "button";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", t.id === tab ? "true" : "false");
+    b.addEventListener("click", function () { tab = t.id; render(); });
+    box.appendChild(b);
+  });
+}
+function renderFilters() {
+  var box = $("#filters");
+  box.textContent = "";
+  if (tab !== "topics") { box.hidden = true; return; }
+  box.hidden = false;
+  [["all", "All"], ["planned", "Planned"], ["done", "Done"]].concat(GROUPS.map(function (g) { return [g, g]; })).forEach(function (f) {
+    var b = el("button", "tab", f[1]);
+    b.type = "button";
+    b.setAttribute("aria-selected", f[0] === tfilter ? "true" : "false");
+    b.addEventListener("click", function () { tfilter = f[0]; render(); });
+    box.appendChild(b);
+  });
+}
+function render() {
+  renderTabs();
+  renderFilters();
+  var list = $("#list");
+  var keepY = window.scrollY;
+  list.textContent = "";
+  var rows = items.filter(function (it) { return it.section === tab; });
+  if (!rows.length) { list.appendChild(el("p", "empty", "Nothing here yet.")); return; }
+  if (tab === "plan") {
+    var steps = rows.filter(function (it) { return /^S\d/.test(it.tag); });
+    rows.forEach(function (it) {
+      if (it.tag === "P1") { list.appendChild(firstCard(it)); if (steps.length) list.appendChild(stepsCard(steps)); }
+      else if (!/^S\d/.test(it.tag)) list.appendChild(readCard(it));
+    });
+  } else if (tab === "topics") {
+    var shown = rows.filter(function (it) {
+      if (tfilter === "all") return true;
+      if (tfilter === "planned") return isOn("topic-" + it.tag + "-planned") && !isOn("topic-" + it.tag + "-done");
+      if (tfilter === "done") return isOn("topic-" + it.tag + "-done");
+      return it.topic === tfilter;
+    });
+    var p = rows.filter(function (it) { return isOn("topic-" + it.tag + "-planned") && !isOn("topic-" + it.tag + "-done"); }).length;
+    var d = rows.filter(function (it) { return isOn("topic-" + it.tag + "-done"); }).length;
+    list.appendChild(el("p", "summary", rows.length + " ideas. " + p + " planned, " + d + " done. Every idea gets its turn as the community grows."));
+    if (!shown.length) list.appendChild(el("p", "empty", "Nothing here yet."));
+    shown.forEach(function (it) { list.appendChild(topicCard(it)); });
+  } else {
+    rows.forEach(function (it) { list.appendChild(readCard(it)); });
+  }
+  window.scrollTo(0, keepY);
+}
+function load() {
+  return call("/api/events", "GET").then(function (r) {
+    if (r.status === 401) { showLock(); return; }
+    if (r.status === 403) { showLock("This account does not have access to this tool."); return; }
+    if (r.status === 503) { showLock("Backstage is not set up yet. Add BANK_PASSCODE in Vercel."); return; }
+    if (!r.ok) { showLock("Could not load. If you have just added this tool, run events-setup.sql in Supabase first."); return; }
+    items = r.json.items || [];
+    marks = r.json.marks || {};
+    vals = r.json.vals || {};
+    $("#lock").hidden = true;
+    $("#app").hidden = false;
+    render();
+  }, function () { showLock("No connection. Try again."); });
+}
+$("#lockform").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var pc = $("#pc").value;
+  if (!pc) return;
+  var btn = $("#lockbtn");
+  btn.disabled = true;
+  call("/api/auth", "POST", { action: "login", passcode: pc }).then(function (r) {
+    btn.disabled = false;
+    if (r.ok) { $("#pc").value = ""; $("#lockmsg").textContent = ""; load(); }
+    else if (r.status === 429) showLock("Too many wrong tries. Try again in an hour.");
+    else if (r.status === 401) showLock("That is not the passcode." + (typeof r.json.left === "number" ? " " + r.json.left + " tries left." : ""));
+    else if (r.status === 503) showLock("Backstage is not set up yet. Add BANK_PASSCODE in Vercel.");
+    else showLock("Something went wrong. Try again.");
+  }, function () { btn.disabled = false; showLock("No connection. Try again."); });
+});
+$("#logout").addEventListener("click", function () {
+  call("/api/auth", "POST", { action: "logout" }).then(function () { items = []; marks = {}; vals = {}; showLock(); });
+});
+load();
+</script>
+</body>
+</html>
