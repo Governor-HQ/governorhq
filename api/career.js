@@ -13,11 +13,14 @@ module.exports = async (req, res) => {
   if (!s.can(session, 'career')) return res.status(403).json({ error: 'no_access' });
 
   if (req.method === 'GET') {
-    const items = await s.supabase
+    const read = (cols) => s.supabase
       .from('career_items')
-      .select('id, section, pos, tag, title, body, added')
+      .select(cols)
       .order('section', { ascending: true })
       .order('pos', { ascending: true });
+    let items = await read('id, section, pos, tag, title, body, added, topic');
+    // Before the topic column exists (career-topics.sql not run yet), read without it.
+    if (items.error) items = await read('id, section, pos, tag, title, body, added');
     const marks = await s.supabase.from('career_marks').select('key, at');
     if (items.error || marks.error) {
       console.error('career read failed:', items.error || marks.error);

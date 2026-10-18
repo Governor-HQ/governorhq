@@ -69,6 +69,9 @@
   details.card > summary::-webkit-details-marker { display: none; }
   details.card > summary h2 { display: inline; }
   details.card[open] > summary { margin-bottom: 4px; }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .parts { display: grid; gap: 10px; margin-top: 12px; }
+  .parts .card { background: var(--raise); }
   .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; }
   @media (prefers-reduced-motion: no-preference) { .btn, .tab { transition: background 0.15s, border-color 0.15s, color 0.15s; } }
 </style>
@@ -220,6 +223,20 @@ function readCard(it) {
   d.appendChild(box);
   return d;
 }
+// One card for a whole topic; its parts open inside it.
+function groupCard(topic, parts) {
+  var d = el("details", "card");
+  var sum = el("summary");
+  sum.appendChild(el("span", "chip", parts[0].tag));
+  sum.appendChild(document.createElement("br"));
+  sum.appendChild(el("h2", null, topic));
+  sum.appendChild(el("p", "meta", parts.length + (parts.length === 1 ? " part" : " parts")));
+  d.appendChild(sum);
+  var inner = el("div", "parts");
+  parts.forEach(function (p) { inner.appendChild(readCard(p)); });
+  d.appendChild(inner);
+  return d;
+}
 function renderTabs() {
   var box = $("#tabs");
   box.textContent = "";
@@ -260,7 +277,18 @@ function render() {
     list.appendChild(el("p", "empty", tab === "posts" && filter === "todo" ? "Nothing left to post here." : "Nothing here yet."));
     return;
   }
-  rows.forEach(function (it) { list.appendChild(tab === "posts" ? postCard(it) : readCard(it)); });
+  if (tab === "posts") {
+    rows.forEach(function (it) { list.appendChild(postCard(it)); });
+    return;
+  }
+  // Items that share a topic are grouped under one card, in order of first appearance.
+  var out = [], groups = {};
+  rows.forEach(function (it) {
+    if (!it.topic) { out.push({ one: it }); return; }
+    if (!groups[it.topic]) { groups[it.topic] = { topic: it.topic, parts: [] }; out.push({ group: groups[it.topic] }); }
+    groups[it.topic].parts.push(it);
+  });
+  out.forEach(function (o) { list.appendChild(o.group ? groupCard(o.group.topic, o.group.parts) : readCard(o.one)); });
 }
 function load() {
   return call("/api/career", "GET").then(function (r) {
